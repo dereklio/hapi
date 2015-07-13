@@ -2546,7 +2546,7 @@ use Harvest\Model\Invoice\Filter;
         $ch = curl_init();
 
         if (!empty($this->_access_token)) {
-            curl_setopt($ch, CURLOPT_URL, "https://" . $this->_account . ".harvestapp.com/" . $url . '?access_token=' . base64_encode($this->_access_token));
+            curl_setopt($ch, CURLOPT_URL, "https://" . $this->_account . ".harvestapp.com/" . $url . '&access_token=' . urlencode($this->_access_token));
             curl_setopt($ch, CURLOPT_HTTPHEADER, array('User-Agent: PHP Wrapper Library for Harvest API', 'Accept: application/xml', 'Content-Type: application/xml'));
         } else {
             curl_setopt($ch, CURLOPT_URL, "https://" . $this->_account . ".harvestapp.com/" . $url);
