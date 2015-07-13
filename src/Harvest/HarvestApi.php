@@ -77,6 +77,11 @@ use Harvest\Model\Invoice\Filter;
     protected $_account;
 
     /**
+     * @var string OAuth Access Token
+     */
+    protected $_access_token;
+
+    /**
      * @var string retry mode for over threshold
      */
     protected $_mode = "FAIL";
@@ -137,6 +142,22 @@ use Harvest\Model\Invoice\Filter;
     public function setAccount($account)
     {
         $this->_account = $account;
+    }
+
+    /**
+     * set Harvest OAuth Access Token
+     *
+     * <code>
+     * $api = new HarvestApi();
+     * $api->setAccessToken("access_token");
+     * </code>
+     *
+     * @param  string $access_token OAuth Access Token
+     * @return void
+     */
+    public function setAccessToken($access_token)
+    {
+        $this->_access_token = $access_token;
     }
 
     /**
@@ -2523,11 +2544,18 @@ use Harvest\Model\Invoice\Filter;
     {
         $this->resetHeader();
         $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, "https://" . $this->_account . ".harvestapp.com/" . $url);
+
+        if (!empty($this->_access_token)) {
+            curl_setopt($ch, CURLOPT_URL, "https://" . $this->_account . ".harvestapp.com/" . $url . '?access_token=' . base64_encode($this->_access_token));
+            curl_setopt($ch, CURLOPT_HTTPHEADER, array('User-Agent: PHP Wrapper Library for Harvest API', 'Accept: application/xml', 'Content-Type: application/xml'));
+        } else {
+            curl_setopt($ch, CURLOPT_URL, "https://" . $this->_account . ".harvestapp.com/" . $url);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, array('User-Agent: PHP Wrapper Library for Harvest API', 'Accept: application/xml', 'Content-Type: application/xml', 'Authorization: Basic (' . base64_encode($this->_user . ":" . $this->_password) . ')'));
+        }
+
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array('User-Agent: PHP Wrapper Library for Harvest API', 'Accept: application/xml', 'Content-Type: application/xml', 'Authorization: Basic (' . base64_encode($this->_user . ":" . $this->_password). ')'));
         curl_setopt($ch, CURLOPT_HEADERFUNCTION, array(&$this,'parseHeader'));
 
         return $ch;
@@ -2703,7 +2731,12 @@ use Harvest\Model\Invoice\Filter;
         $ch = $this->generateCurl($url);
         curl_setopt($ch, CURLOPT_POST, 1);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array('User-Agent: PHP Wrapper Library for Harvest API', 'Accept: application/xml', 'Content-Type: multipart/form-data', 'Authorization: Basic (' . base64_encode($this->_user . ":" . $this->_password). ')'));
+
+        if (!empty($this->_access_token)) {
+            curl_setopt($ch, CURLOPT_HTTPHEADER, array('User-Agent: PHP Wrapper Library for Harvest API', 'Accept: application/xml', 'Content-Type: multipart/form-data'));
+        } else {
+            curl_setopt($ch, CURLOPT_HTTPHEADER, array('User-Agent: PHP Wrapper Library for Harvest API', 'Accept: application/xml', 'Content-Type: multipart/form-data', 'Authorization: Basic (' . base64_encode($this->_user . ":" . $this->_password) . ')'));
+        }
 
         return $ch;
     }
